@@ -1,7 +1,7 @@
 # DocAnalyzer 文档解析程序
 
 ## 用途说明
-此程序用于将PDF文档的内容解析并提取到Markdown文档中，以便后续将文本内容用于知识库、大模型处理等场景。
+此程序利用火山引擎视觉理解模型将PDF文档的内容做解析并提取到Markdown文档中，以便后续将文本内容用于知识库、大模型处理等场景。
 
 ## 使用说明
 1. 用Maven命令对程序打包 mvn clean package 得到 DocAnalyzer-1.0.jar
