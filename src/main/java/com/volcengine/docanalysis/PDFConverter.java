@@ -11,10 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class PDFConverter {
 
@@ -36,26 +32,7 @@ public class PDFConverter {
             ImageIOUtil.writeImage(
                     bim, imageFileName, DPI);
         }
-        /*ExecutorService executorService = Executors.newFixedThreadPool(30);
-        for (int page = 0; page < document.getNumberOfPages(); ++page) {
-            final int pageNum = page;
-            executorService.execute(() -> {
-                BufferedImage bim = null;
-                try {
-                    bim = pdfRenderer.renderImageWithDPI(
-                            pageNum, DPI, ImageType.RGB);
-                    String imageFileName = String.format(filePath + "image-%d.%s", pageNum + 1, "jpg");
-                    log(imageFileName);
-                    imageFiles.add(imageFileName);
-                    ImageIOUtil.writeImage(
-                            bim, imageFileName, DPI);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
 
-            });
-
-        }*/
         document.close();
         return imageFiles;
     }
