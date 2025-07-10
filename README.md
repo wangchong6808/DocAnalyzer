@@ -6,10 +6,10 @@
 ## 使用说明
 1. 用Maven命令对程序打包 mvn clean package 得到 DocAnalyzer-1.0.jar
 2. 开始处理文件 执行命令
-`java -jar DocAnalyzer-1.0.jar batchSize model fileNameWithFullPath APIKey`
-- batchSize 为必要参数且为正整数，程序会基于此数字对文档做分段调用视觉理解模型
+`java -jar DocAnalyzer-1.0.jar model fileNameWithFullPath batchSize APIKey`
 - model参数值可以是 Model ID(具体值可参考文档 https://www.volcengine.com/docs/82379/1330310) 或者 Endpoint。此参数为必要参数
 - fileNameWithFullPath 是PDF文件的全路径名称，如 /Users/bytedance/Documents/myDoc.pdf  此参数为必要参数
+- batchSize 为必要参数且为正整数，程序会基于此数字对文档做分段调用视觉理解模型
 - APIKey 为可选参数，可以通过设置环境变量 VOLC_APIKEY 提供，如果命令行与环境变量同时设置则以命令行参数为准
 3. 命令执行后可在PDF文件所在目录下找到生成的同名Markdown文件和中间过程转换出的图片文件目录
 

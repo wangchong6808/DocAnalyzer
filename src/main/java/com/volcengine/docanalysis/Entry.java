@@ -28,14 +28,10 @@ public class Entry {
             apiKey = System.getenv("VOLC_APIKEY");
         }
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            throw new IllegalArgumentException("API Key needs to be provided as the third argument or VOLC_APIKEY environment variable");
+            throw new IllegalArgumentException("API Key needs to be provided either in argument or in environment variable");
         }
 
         start(modelName, fullFileName, batchSize, apiKey);
-    }
-
-    public static void main1(String[] args) throws Exception {
-        main(new String[]{"doubao-1-5-thinking-vision-pro-250428", "/Users/bytedance/Documents/WorkSpace/b6cb42cb59b3afe07710d8bd6dfb70ae.pdf", "16"});
     }
 
     private static void start(String model, String fullFileName, int batchSize, String apiKey) throws Exception {
