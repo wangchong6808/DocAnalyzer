@@ -6,15 +6,12 @@ import java.util.Date;
 
 public class Logger {
 
-    public static void log (String className, String content) {
+    public static void log (String content) {
         String datePrefix = DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss");
-        System.out.printf("%s %s -- %s%n", datePrefix, className, content);
-    }
-
-    public static void main(String[] args) {
-        log("Logger", "this is testing");
-        log("Logger", "this is testing");
-        log("Logger", "this is testing");
+        String callerClass = Thread.currentThread()
+                                .getStackTrace()[2]
+                                .getClassName();
+        System.out.printf("%s %s -- %s%n", datePrefix, callerClass, content);
     }
 
     public static String getExecutionTime(Date startTime) {

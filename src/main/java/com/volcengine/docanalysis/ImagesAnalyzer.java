@@ -1,6 +1,7 @@
 package com.volcengine.docanalysis;
 
 import com.volcengine.ark.runtime.model.Usage;
+import static com.volcengine.docanalysis.Logger.log;
 import com.volcengine.ark.runtime.model.completion.chat.*;
 import com.volcengine.ark.runtime.service.ArkService;
 import io.reactivex.Flowable;
@@ -217,10 +218,6 @@ public class ImagesAnalyzer {
                 .multiContent(multiParts).build();
         messages.add(userMessage);
         return messages;
-    }
-
-    private void log(String content) {
-        Logger.log(this.getClass().getSimpleName(), content);
     }
 
 }

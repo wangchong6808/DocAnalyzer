@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.volcengine.docanalysis.Logger.log;
+
 public class PDFConverter {
 
     public List<String> convertToImages(String filename) throws Exception {
@@ -43,10 +45,6 @@ public class PDFConverter {
         File file1 = new File(file.getParentFile(), folderName + File.separator + ".tmp");
         FileUtils.createParentDirectories(file1);
         return folderName;
-    }
-
-    private void log(String content) {
-        Logger.log(this.getClass().getSimpleName(), content);
     }
 
 }

@@ -3,6 +3,7 @@ package com.volcengine.docanalysis;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import static com.volcengine.docanalysis.Logger.log;
 
 public class Entry {
 
@@ -45,7 +46,7 @@ public class Entry {
         imagesAnalyzer.analyze(imageFiles, generateResultFileName(fullFileName), model, apiKey, batchSize);
         
         String executionTime = Logger.getExecutionTime(startTime);
-        log("File process done, total execution time: " + executionTime);
+        Logger.log("File process done, total execution time: " + executionTime);
     
     }
 
@@ -57,7 +58,4 @@ public class Entry {
         }
     }
 
-    static void log(String content) {
-        Logger.log(Entry.class.getSimpleName(), content);
-    }
 }
