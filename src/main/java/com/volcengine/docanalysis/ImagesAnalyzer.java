@@ -1,7 +1,9 @@
 package com.volcengine.docanalysis;
 
 import com.volcengine.ark.runtime.model.Usage;
+
 import static com.volcengine.docanalysis.Logger.log;
+
 import com.volcengine.ark.runtime.model.completion.chat.*;
 import com.volcengine.ark.runtime.service.ArkService;
 import io.reactivex.Flowable;
@@ -46,10 +48,8 @@ public class ImagesAnalyzer {
     }
 
     private void saveResultsToFile(String combinedResult, String resultFileName) throws IOException {
-        
-        File textFile = new File(resultFileName);
-        textFile.createNewFile();
 
+        File textFile = new File(resultFileName);
         IOUtils.write(combinedResult, FileUtils.openOutputStream(textFile), StandardCharsets.UTF_8);
         log("Result is saved to " + textFile);
     }
@@ -61,28 +61,24 @@ public class ImagesAnalyzer {
                 .collect(Collectors.toList());
     }
 
-    private String executeBatchAnalysis(List<List<String>> batches, String model, ArkService service)
-            throws ExecutionException, InterruptedException {
-        try (ExecutorService executor = Executors
-                .newFixedThreadPool(batches.size())) {
-            // Submit all tasks and collect futures
+    private String executeBatchAnalysis(List<List<String>> batches, String model, ArkService service) {
+        try (ExecutorService executor = Executors.newFixedThreadPool(batches.size())) {
+
             List<Future<String>> futures = batches.stream()
                     .map(batch -> executor.submit(() -> analyzeBatch(model, batch, service)))
-                    .collect(Collectors.toList());
-            
-            // Collect results from all futures
-            StringBuilder result = new StringBuilder();
-            for (Future<String> future : futures) {
-                try {
-                    result.append(future.get()).append("\n");
-                } catch (ExecutionException | InterruptedException e) {
-                    throw new RuntimeException("Analysis failed", e);
-                }
-            }
-            
-            return result.toString();
+                    .toList();
+
+            return futures.stream().map(future -> {
+                        try {
+                            return future.get();
+                        } catch (ExecutionException | InterruptedException e) {
+                            throw new RuntimeException("Analysis failed", e);
+                        }
+                    })
+                    .collect(Collectors.joining("\n"));
         }
     }
+
 
     private ArkService createArkService(String apiKey) {
         ConnectionPool connectionPool = new ConnectionPool(5, 1, TimeUnit.SECONDS);
@@ -94,10 +90,7 @@ public class ImagesAnalyzer {
                 .apiKey(apiKey)
                 .build();
 
-        // Register shutdown hook for resource cleanup
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            service.shutdownExecutor();
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(service::shutdownExecutor));
         return service;
     }
 
@@ -117,7 +110,7 @@ public class ImagesAnalyzer {
         int maxTokens = model.startsWith("doubao-seed-1.6") ? 32768 : 16384;
         List<ChatMessage> messages = constructMessages(batch);
         ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
-                // 您可以前往 在线推理页 创建接入点后进行使用
+
                 .model(model)
                 .messages(messages)
                 .temperature(0.01)
@@ -150,13 +143,13 @@ public class ImagesAnalyzer {
                 "Usage information of this batch: prompt tokens %d; completion tokens %d total tokens %d",
                 usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
         log(usageInfo);
-        
+
         Date endTime = new Date();
         String startTimeString = DateFormatUtils.format(startTime, "yyyy-MM-dd HH:mm:ss");
         String endTimeString = DateFormatUtils.format(endTime, "yyyy-MM-dd HH:mm:ss");
 
         String executionTime = Logger.getExecutionTime(startTime);
-        //print startTime、endTime and duration in human readable format
+
         log(String.format("Batch process done. startTime: %s, endTime: %s, duration: %s", startTimeString, endTimeString,
                 executionTime));
 
@@ -165,29 +158,30 @@ public class ImagesAnalyzer {
     }
 
     private List<String> encodeToBase64(List<String> fileNames) {
-        ExecutorService executor = Executors.newFixedThreadPool(20);
-        List<Future<String>> futures = new ArrayList<>();
+        try (ExecutorService executor = Executors.newFixedThreadPool(Math.min(fileNames.size(),
+                Runtime.getRuntime().availableProcessors() * 2))) {
 
-        try {
-            // 提交所有文件处理任务
-            for (String fileName : fileNames) {
-                futures.add(executor.submit(() -> Base64.getEncoder().encodeToString(
-                        FileUtils.readFileToByteArray(new File(fileName)))));
-            }
+            List<Future<String>> futures = fileNames.stream()
+                    .map(fileName -> executor.submit(() -> {
+                        try {
+                            return Base64.getEncoder().encodeToString(
+                                    FileUtils.readFileToByteArray(new File(fileName)));
+                        } catch (IOException e) {
+                            throw new RuntimeException("Failed to read file: " + fileName, e);
+                        }
+                    })).toList();
 
-            // 收集处理结果
-            List<String> base64Images = new ArrayList<>(futures.size());
-            for (Future<String> future : futures) {
-                base64Images.add(future.get());
-            }
-            return base64Images;
-
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("图片转base64失败", e);
-        } finally {
-            executor.shutdown();
+            return futures.stream().map(future -> {
+                        try {
+                            return future.get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            throw new RuntimeException("Image to base64 conversion failed", e);
+                        }
+                    })
+                    .collect(Collectors.toList());
         }
     }
+
 
     private List<ChatMessage> constructMessages(List<String> base64Images) {
         final List<ChatMessage> messages = new ArrayList<>();
@@ -200,17 +194,17 @@ public class ImagesAnalyzer {
         final List<ChatCompletionContentPart> multiParts = new ArrayList<>();
         multiParts.add(ChatCompletionContentPart.builder().type("text").text(
                 """
-                        请严格按输入图片的顺序提取出图片中的所有文字内容，并根据原图中各项内容的结构尽量保持输出类似的结构，可以使用Markdown、html等标签来体现结构
-                        1. 注意段落的准确性
-                        2. 遇到空白的图片就继续解析下一张图片
-                        3. 文档中可能存在合并单元格的表格，要正确解析并用Markdown或html恰当表示
-                        4. 不提取页码
-                                                """).build());
+                请严格按输入图片的顺序提取出图片中的所有文字内容，并根据原图中各项内容的结构尽量保持输出类似的结构，可以使用Markdown、html等标签来体现结构
+                1. 注意段落的准确性
+                2. 遇到空白的图片就继续解析下一张图片
+                3. 文档中可能存在合并单元格的表格，要正确解析并用Markdown或html恰当表示
+                4. 不提取页码
+                """).build());
 
         for (String base64Image : base64Images) {
             multiParts.add(ChatCompletionContentPart.builder().type("image_url").imageUrl(
-                    new ChatCompletionContentPart.ChatCompletionContentPartImageURL(
-                            "data:image/jpeg;base64," + base64Image))
+                            new ChatCompletionContentPart.ChatCompletionContentPartImageURL(
+                                    "data:image/jpeg;base64," + base64Image))
                     .build());
         }
 
