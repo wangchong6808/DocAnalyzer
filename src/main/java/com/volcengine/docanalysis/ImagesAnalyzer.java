@@ -119,30 +119,28 @@ public class ImagesAnalyzer {
 
     private List<String> encodeToBase64(List<String> fileNames) {
         ExecutorService executor = Executors.newFixedThreadPool(20);
-        List<CompletableFuture<String>> futures = new ArrayList<>();
-        for (String fileName : fileNames) {
+        List<Future<String>> futures = new ArrayList<>();
 
-            CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(new File(fileName)));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }, executor);
-            futures.add(future);
-        }
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        // 使用自定义的线程池
-        executor.shutdown();
-        List<String> base64Images = new ArrayList<>();
-        futures.forEach(f -> {
-            try {
-                base64Images.add(f.get());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+        try {
+            // 提交所有文件处理任务
+            for (String fileName : fileNames) {
+                futures.add(executor.submit(() -> 
+                    Base64.getEncoder().encodeToString(
+                        FileUtils.readFileToByteArray(new File(fileName)))));
             }
-        });
-        return base64Images;
+
+            // 收集处理结果
+            List<String> base64Images = new ArrayList<>(futures.size());
+            for (Future<String> future : futures) {
+                base64Images.add(future.get());
+            }
+            return base64Images;
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("图片转base64失败", e);
+        } finally {
+            executor.shutdown();
+        }
     }
 
     private List<ChatMessage> constructMessages(List<String> base64Images) {
