@@ -1,6 +1,7 @@
 package com.volcengine.docanalysis;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 
 public class Entry {
@@ -36,12 +37,16 @@ public class Entry {
 
     private static void start(String model, String fullFileName, int batchSize, String apiKey) throws Exception {
         log("start to process file " + fullFileName + " with model " + model + " batchSize " + batchSize);
-
+        Date startTime = new Date();
         PDFConverter converter = new PDFConverter();
         List<String> imageFiles = converter.convertToImages(fullFileName);
 
         ImagesAnalyzer imagesAnalyzer = new ImagesAnalyzer();
         imagesAnalyzer.analyze(imageFiles, generateResultFileName(fullFileName), model, apiKey, batchSize);
+        
+        String executionTime = Logger.getExecutionTime(startTime);
+        log("File process done, total execution time: " + executionTime);
+    
     }
 
     private static String generateResultFileName(String fullFileName) {
@@ -52,7 +57,7 @@ public class Entry {
         }
     }
 
-    private static void log(String content) {
+    static void log(String content) {
         Logger.log(Entry.class.getSimpleName(), content);
     }
 }

@@ -16,4 +16,13 @@ public class Logger {
         log("Logger", "this is testing");
         log("Logger", "this is testing");
     }
+
+    public static String getExecutionTime(Date startTime) {
+        long endTime = System.currentTimeMillis();
+        long durationMs = endTime - startTime.getTime();
+        long totalSeconds = durationMs / 1000;
+        long minutes = totalSeconds / 60;
+        long seconds = totalSeconds % 60;
+        return String.format("%d分%d秒", minutes, seconds);
+    }
 }
